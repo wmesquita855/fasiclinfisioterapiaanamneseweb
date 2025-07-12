@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Relatórios – Fasiclin</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #3fb8af;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+      padding-bottom: 60px;
+    }
+
+    .logo {
+      max-width: 200px;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      background: #fff;
+      padding: 30px 20px;
+      border-radius: 15px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      margin: 0 10px;
+      min-height: 450px;
+    }
+
+    h2 {
+      color: #3fb8af;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+      font-size: 1em;
+    }
+
+    .btn {
+      background: linear-gradient(to right, #3fb8af, #2ca89a);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50px;
+      font-weight: bold;
+      font-size: 0.95em;
+      box-shadow: 0 4px 10px rgba(63, 184, 175, 0.4);
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+      margin: 20px 10px 0 0;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(to right, #2ca89a, #3fb8af);
+    }
+
+    #resultadoRelatorio {
+      margin-top: 25px;
+      border-top: 1px solid #ccc;
+      padding-top: 20px;
+    }
+
+    ul.anamnese-lista {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul.anamnese-lista li {
+      padding: 15px;
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      background: #f9f9f9;
+    }
+
+    #loader {
+      display: none;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+
+  <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+  <div id="menuContainer"></div>
+
+  <div class="wrapper">
+    <img src="fasiclinlogo.png" alt="Logo Fasiclin" class="logo" />
+
+    <div class="container">
+      <h2>Relatórios</h2>
+
+      <label for="profissional">Profissional</label>
+      <select id="profissional">
+        <option value="">Selecione um profissional</option>
+      </select>
+
+      <div style="text-align: center; margin-top: 15px;">
+        <button class="btn" onclick="buscarRelatorioPorProfissional()">Gerar</button>
+      </div>
+
+      <div id="loader"><em>Carregando dados...</em></div>
+      <div id="resultadoRelatorio"></div>
+    </div>
+  </div>
+
+  <script>
+    fetch("menu.html")
+      .then(res => res.text())
+      .then(html => {
+        document.getElementById("menuContainer").innerHTML = html;
+      });
+
+    function carregarProfissionais() {
+      fetch("/api/get_profissionais_fisio.php")
+        .then(res => res.json())
+        .then(profissionais => {
+          const select = document.getElementById("profissional");
+          profissionais.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.IDPROFISSIO;
+            opt.textContent = p.NOMEPESSOA;
+            select.appendChild(opt);
+          });
+        })
+        .catch(() => alert("Erro ao carregar profissionais."));
+    }
+
+    function buscarRelatorioPorProfissional() {
+      const idProf = document.getElementById("profissional").value;
+      const resultado = document.getElementById("resultadoRelatorio");
+      const loader = document.getElementById("loader");
+
+      if (!idProf) {
+        alert("Selecione um profissional.");
+        return;
+      }
+
+      resultado.innerHTML = "";
+      loader.style.display = "block";
+
+      fetch("/api/get_dados_completos_por_profissional.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ID_PROFISSIO: idProf })
+      })
+        .then(res => res.json())
+        .then(json => {
+          loader.style.display = "none";
+
+          if (!json.sucesso || !json.pacientes || json.pacientes.length === 0) {
+            resultado.innerHTML = `<p style='color:red;'>${json.erro || "Nenhum dado encontrado."}</p>`;
+            return;
+          }
+
+          const html = json.pacientes.map(p => {
+            let anamnesesHTML = (p.anamneses || []).map((a, index) => {
+              const procedimentos = (a.procedimentos || []).map((proc, i) => `<li>${index+1}.1.${i+1} ${proc.descricao} (${proc.quantidade})</li>`).join('');
+              const exercicios = (a.exercicios || []).map((ex, i) => `<li>${index+1}.2.${i+1} ${ex.descricao} (${ex.quantidade})</li>`).join('');
+
+              return `
+                <div style="margin-left:15px;">
+                  <strong>${index+1} Anamnese:</strong><br>
+                  Data de Atendimento: ${a.data}<br>
+                  <strong>${index+1}.1 Procedimentos Prescritos:</strong><ul>${procedimentos}</ul>
+                  <strong>${index+1}.2 Exercícios Prescritos:</strong><ul>${exercicios}</ul>
+                </div>
+              `;
+            }).join('<hr>');
+
+            return `
+              <li>
+                <strong>${p.dados.nome}</strong><br>
+                CPF: ${p.dados.cpf}<br>
+                Sexo: ${p.dados.sexo}<br>
+                Data de Nascimento: ${p.dados.dataNascimento}<br>
+                <hr>
+                ${anamnesesHTML}
+              </li>
+            `;
+          }).join("");
+
+          resultado.innerHTML = `
+            <h3>Pacientes Encontrados:</h3>
+            <ul class="anamnese-lista">${html}</ul>
+          `;
+        })
+        .catch(() => {
+          loader.style.display = "none";
+          resultado.innerHTML = "<p style='color:red;'>Erro ao buscar dados.</p>";
+        });
+    }
+
+    carregarProfissionais()
+  </script>
+</body>
+</html>

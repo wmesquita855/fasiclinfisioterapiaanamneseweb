@@ -1,0 +1,97 @@
+
+    #menuLateral {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 180px;
+  height: 100vh;
+  background: #3fb8af;
+  color: white;
+  padding-top: 30px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+#menuLateral ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#menuLateral li {
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#menuLateral a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  display: block;
+}
+
+#menuLateral a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+@media (max-width: 767px) {
+  #menuLateral {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: flex;
+    justify-content: space-around;
+    flex-direction: row;
+    padding: 10px 0;
+  }
+
+  #menuLateral ul {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+  }
+
+  #menuLateral li {
+    padding: 0;
+    flex: 1;
+    text-align: center;
+    border-bottom: none;
+  }
+
+  #menuLateral a {
+    padding: 10px 0;
+    font-size: 0.95em;
+  }
+}
+
+/* Adiciona espaço para não cobrir o conteúdo */
+@media (min-width: 768px) {
+  body {
+    padding-left: 190px; /* espaço para o menu lateral */
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    padding-bottom: 60px; /* espaço para o menu rodapé */
+  }
+}
+
+select, select option {
+  font-size: 1em;
+  height: auto;
+  max-height: 40px;
+  line-height: 1.2em;
+}
+
+@keyframes progressAnim {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+

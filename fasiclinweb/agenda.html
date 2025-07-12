@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Agenda – Fasiclin Fisioterapia</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding-bottom: 80px;
+      background: #3fb8af; /* fundo uniforme */
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background: #fff;
+      margin: 10px 10px;
+      border-radius: 15px;
+      padding: 25px;
+      max-width: 1000px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    .top-bar input {
+      flex: 1;
+      padding: 12px;
+      font-size: 1em;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .top-bar button {
+      padding: 12px 18px;
+      font-size: 1em;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .btn-buscar {
+      background: #3fb8af;
+    }
+
+    .btn-sair {
+      background: #e74c3c;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+
+    .card {
+      background: white;
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: background-color 0.3s ease, border 0.3s ease;
+    }
+
+    .card.card-selecionado {
+      background-color: #e0f7f4;
+      border: 2px solid #3fb8af;
+    }
+
+    .card h3 {
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+
+    .actions button {
+      background: linear-gradient(to right, #3fb8af, #2ca89a);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50px;
+      font-weight: bold;
+      font-size: 0.95em;
+      box-shadow: 0 4px 10px rgba(63, 184, 175, 0.4);
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+
+    .actions button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(to right, #2ca89a, #3fb8af);
+    }
+
+    @media (min-width: 768px) {
+      .card-view { display: none; }
+    }
+
+    @media (max-width: 767px) {
+      table { display: none; }
+      .card-view { display: block; }
+    }
+
+    #modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+    }
+
+    #modalContent {
+      background: white;
+      padding: 20px 40px;
+      border-radius: 15px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #3fb8af;
+    }
+
+    #relatorioBarra {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #3fb8af;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    #relatorioBarra button {
+      background: white;
+      color: #3fb8af;
+      font-weight: bold;
+      padding: 10px 25px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+
+    .boas-vindas {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #3fb8af;
+    }
+
+    .wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px; /* distância do topo da página */
+}
+
+.logo {
+  max-width: 180px;
+  margin-bottom: 5px; /* mesmo valor da margem inferior da .boas-vindas */
+}
+
+
+
+  </style>
+  <link rel="stylesheet" href="menu.css">
+
+</head>
+<body>
+
+<div id="menuContainer"></div>
+
+<div class="wrapper">
+  <img src="fasiclinlogo.png" alt="Logo Fasiclin" class="logo" />
+
+  <div class="container">
+    <div class="boas-vindas" id="mensagemUsuario">
+      <!-- Mensagem será inserida via JS -->
+    </div>
+
+    <div class="top-bar">
+      <input type="text" id="filtro" placeholder="Buscar por data, nome, procedimento ou situação..." />
+      <button class="btn-buscar" onclick="carregarAgenda()">Buscar</button>
+      
+    </div>
+
+    <table id="agendaTable">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAll" onchange="marcarTodos(this)" /></th>
+          <th>Data da Agenda</th>
+          <th>Paciente</th>
+          <th>Procedimento</th>
+          <th>Situação</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="agendaBody"></tbody>
+    </table>
+
+    <div class="card-view" id="cardContainer"></div>
+  </div>
+
+  <div id="modal">
+    <div id="modalContent">Aguarde...</div>
+  </div>
+
+  <div id="relatorioBarra">
+    <button onclick="gerarRelatorio()">Gerar Relatório</button>
+  </div>
+</div>
+  <script>
+
+    fetch("menu.html")
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById("menuContainer").innerHTML = html;
+        });
+
+
+    function formatarCPF(cpf) {
+      return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    }
+
+    function formatarDataHora(dataIso) {
+      const data = new Date(dataIso);
+      const dia = String(data.getDate()).padStart(2, '0');
+      const mes = String(data.getMonth() + 1).padStart(2, '0');
+      const ano = data.getFullYear();
+      const horas = String(data.getHours()).padStart(2, '0');
+      const minutos = String(data.getMinutes()).padStart(2, '0');
+      return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+    }
+
+    const idProf = localStorage.getItem("usuario_id");
+    let todasAgendas = [];
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    function marcarTodos(master) {
+      const checkboxes = document.querySelectorAll('.linhaCheckbox');
+      checkboxes.forEach(c => c.checked = master.checked);
+      atualizarBarraRelatorio();
+    }
+
+    function atualizarBarraRelatorio() {
+      const checkboxes = document.querySelectorAll('.linhaCheckbox:checked');
+      const cardsSelecionados = document.querySelectorAll('.card[data-selecionado="true"]');
+      const exibir = checkboxes.length > 0 || cardsSelecionados.length > 0;
+      document.getElementById("relatorioBarra").style.display = exibir ? "block" : "none";
+    }
+
+    function gerarRelatorio() {
+      alert("Relatório gerado com os itens selecionados.");
+    }
+
+    function carregarAgenda() {
+      const filtro = document.getElementById("filtro").value.toLowerCase();
+      fetch(`/api/get_agenda.php?idProf=${idProf}`)
+        .then(res => res.json())
+        .then(dados => {
+          todasAgendas = dados;
+          const tbody = document.getElementById("agendaBody");
+          const cards = document.getElementById("cardContainer");
+          tbody.innerHTML = "";
+          cards.innerHTML = "";
+
+          dados.filter(item => {
+            const texto = `${item.DATAABERT} ${item.nome_paciente} ${item.nome_procedimento} aguardando atendido cancelado`.toLowerCase();
+            return texto.includes(filtro);
+          }).forEach(item => {
+            let situacao = "";
+            let botaoDesabilitado = false;
+
+            switch (parseInt(item.SITUAGEN)) {
+              case 1:
+                situacao = "Aguardando";
+                botaoDesabilitado = false;
+                break;
+              case 2:
+                situacao = "Atendido";
+                botaoDesabilitado = true;
+                break;
+              case 3:
+                situacao = "Cancelado";
+                botaoDesabilitado = true;
+                break;
+              default:
+                situacao = "Desconhecida";
+                botaoDesabilitado = true;
+            }
+
+            const cpfFormatado = formatarCPF(item.cpf_paciente);
+            const dataFormatada = formatarDataHora(item.DATAABERT);
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td><input type="checkbox" class="linhaCheckbox" onchange="atualizarBarraRelatorio()" /></td>
+              <td>${dataFormatada}</td>
+              <td>${item.nome_paciente} (${cpfFormatado})</td>
+              <td>${item.nome_procedimento} (${item.código_procedimento})</td>
+              <td>${situacao}</td>
+              <td>
+                <div class="actions">
+                  <button onclick="registrarAtendimento(${item.IDAGENDA})" ${botaoDesabilitado ? "disabled style='opacity:0.5; cursor:not-allowed;'" : ""}>
+                    Registrar Atendimento
+                  </button>
+                </div>
+              </td>
+
+            `;
+            tbody.appendChild(tr);
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+              <h3>${dataFormatada}</h3>
+              <p><strong>Paciente:</strong> ${item.nome_paciente} (${cpfFormatado})</p>
+              <p><strong>Procedimento:</strong> ${item.nome_procedimento} (${item.código_procedimento})</p>
+              <p><strong>Situação:</strong> ${situacao}</p>
+              <div class="actions">
+                <button onclick="registrarAtendimento(${item.IDAGENDA})">Registrar Atendimento</button>
+              </div>
+            `;
+            card.onclick = () => {
+              const selecionado = card.getAttribute("data-selecionado") === "true";
+              card.setAttribute("data-selecionado", !selecionado);
+              card.classList.toggle("card-selecionado");
+              atualizarBarraRelatorio();
+            };
+            cards.appendChild(card);
+          });
+        });
+    }
+
+    function registrarAtendimento(idAgenda) {
+      const agenda = todasAgendas.find(a => a.IDAGENDA == idAgenda);
+      if (agenda && parseInt(agenda.ID_PROCED) === 5967) {
+        document.getElementById("modal").style.display = "flex";
+        document.getElementById("modalContent").textContent = "Aguarde...";
+        setTimeout(() => {
+          localStorage.setItem("agenda_selecionada", JSON.stringify(agenda));
+          window.location.href = "registrar_anamnese.html";
+        }, 5967);
+      } else {
+        localStorage.setItem("agenda_selecionada", JSON.stringify(agenda));
+          window.location.href = "registrar_atendimento.html";
+      }
+    }
+
+    window.onload = carregarAgenda;
+    const nomeUsuario = localStorage.getItem("usuario_nome");
+      if (nomeUsuario) {
+        document.getElementById("mensagemUsuario").textContent = `Bem-vindo(a), ${nomeUsuario}!`;
+      }
+
+    document.addEventListener("change", atualizarBarraRelatorio);
+    document.addEventListener("click", () => setTimeout(atualizarBarraRelatorio, 100));
+  </script>
+</body>
+</html>

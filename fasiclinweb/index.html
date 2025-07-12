@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fasiclin Fisioterapia – Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(to bottom, #3fb8af, #7fc7af);
+    }
+
+    .logo {
+      margin-bottom: 20px;
+      max-width: 180px;
+    }
+
+    .login-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 400px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #3fb8af;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: #3fb8af;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      background-color: #359a95;
+    }
+
+    .error {
+      color: red;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGO ACIMA DO CARD -->
+  <img src="fasiclinlogo.png" alt="Logo Fasiclin" class="logo" />
+
+  <div class="login-container">
+    <h2>Fasiclin Fisioterapia</h2>
+    <input type="text" id="usuario" placeholder="Usuário" required />
+    <input type="password" id="senha" placeholder="Senha" required />
+    <button onclick="fazerLogin()">Entrar</button>
+    <p class="error" id="erro"></p>
+  </div>
+
+  <script>
+    function fazerLogin() {
+      const usuario = document.getElementById("usuario").value.trim();
+      const senha = document.getElementById("senha").value.trim();
+      const erro = document.getElementById("erro");
+
+      fetch("/api/post_login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario, senha })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.sucesso) {
+          localStorage.setItem("usuario_id", data.id_profissional);
+          localStorage.setItem("usuario_nome", data.nome_profissional);
+          window.location.href = "agenda.html";
+        } else {
+          erro.textContent = data.erro;
+        }
+      })
+      .catch(() => {
+        erro.textContent = "Erro de conexão com o servidor.";
+      });
+    }
+  </script>
+</body>
+</html>

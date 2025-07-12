@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Pacientes - Fasiclin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+
+    header img {
+      height: 70px;
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      font-size: 24px;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    .paciente {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    .paciente h2 {
+      font-size: 20px;
+      margin-top: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    th {
+      background: #f5f5f5;
+    }
+
+    .botoes {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .btn {
+      background: #3fb8af;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 0 10px;
+      transition: background 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #2ca89a;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="fasiclinlogo.png" alt="Logo do Sistema Fasiclin">
+  <h1>Relatório de Pacientes - Fasiclin</h1>
+</header>
+
+<div id="conteudoRelatorio">Carregando relatório...</div>
+
+<div class="botoes">
+  <button class="btn" onclick="window.close()">Cancelar</button>
+  <button class="btn" onclick="window.print()">Imprimir</button>
+</div>
+
+<script>
+  const ID_PROFISSIO = sessionStorage.getItem('ID_PROFISSIO') || prompt("Informe o ID do profissional:");
+
+  fetch("/api/get_dados_completos_por_profissional.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ID_PROFISSIO })
+  })
+  .then(res => res.json())
+  .then(json => {
+    const container = document.getElementById("conteudoRelatorio");
+
+    if (!json.sucesso || !json.pacientes || json.pacientes.length === 0) {
+      container.innerHTML = "<p>Nenhum dado encontrado.</p>";
+      return;
+    }
+
+    let html = "";
+    json.pacientes.forEach((p, i) => {
+      html += `
+        <div class="paciente">
+          <h2>${i + 1}. ${p.dados.nome} (CPF: ${p.dados.cpf})</h2>
+          <p><strong>Data Nascimento:</strong> ${p.dados.dataNascimento}</p>
+          <p><strong>Sexo:</strong> ${p.dados.sexo}</p>
+
+          <h3>Anamnese</h3>
+          <p><strong>ID:</strong> ${p.anamnese.id}</p>
+          <p><strong>Data:</strong> ${p.anamnese.data}</p>
+          <p><strong>Responsável:</strong> ${p.anamnese.nomeResp} (${p.anamnese.cpfResp})</p>
+          <p><strong>Observações:</strong> ${p.anamnese.observacoes || '-'}</p>
+
+          <h3>Respostas</h3>
+          <table>
+            <tr><th>Pergunta</th><th>Resposta</th></tr>
+            ${p.respostas.map(r => `
+              <tr>
+                <td>${r.PERGUNTA}</td>
+                <td>${r.TIPO === 'A' ? (r.RESPOBJET == 1 ? 'Sim' : 'Não') : r.RESPSUBJET}</td>
+              </tr>
+            `).join('')}
+          </table>
+
+          ${p.procedimentos.length > 0 ? `
+            <h3>Procedimentos</h3>
+            <table>
+              <tr><th>Descrição</th><th>Qtd</th><th>Orientação</th></tr>
+              ${p.procedimentos.map(proc => `
+                <tr>
+                  <td>${proc.DESCRPROC}</td>
+                  <td>${proc.PROCEDQTD}</td>
+                  <td>${proc.ORIENTACAO}</td>
+                </tr>
+              `).join('')}
+            </table>
+          ` : ''}
+
+          ${p.exercicios.length > 0 ? `
+            <h3>Exercícios</h3>
+            <table>
+              <tr><th>Exercício</th><th>Link</th><th>Qtd</th><th>Orientação</th></tr>
+              ${p.exercicios.map(e => `
+                <tr>
+                  <td>${e.DESCREXERC}</td>
+                  <td><a href="${e.LINKVIDEO}" target="_blank">Ver vídeo</a></td>
+                  <td>${e.QTDEXERC}</td>
+                  <td>${e.ORIENTACAO}</td>
+                </tr>
+              `).join('')}
+            </table>
+          ` : ''}
+
+          ${p.prontuarios.length > 0 ? `
+            <h3>Prontuários</h3>
+            <table>
+              <tr><th>Data</th><th>Descrição</th></tr>
+              ${p.prontuarios.map(pr => `
+                <tr>
+                  <td>${pr.DATAPROCED}</td>
+                  <td>${pr.DESCRPRONTU}</td>
+                </tr>
+              `).join('')}
+            </table>
+          ` : ''}
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  })
+  .catch(() => {
+    document.getElementById("conteudoRelatorio").innerHTML = "<p style='color:red;'>Erro ao carregar dados do relatório.</p>";
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agendamento - Fasiclin</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+      margin: 0; padding: 0;
+      background: #3fb8af;
+      display: flex; justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin: 30px 10px;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    h2 {
+      color: #3fb8af;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .campo {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    input[type="date"],
+    input[type="time"],
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      background: white;
+    }
+    .btn {
+      background: linear-gradient(to right, #3fb8af, #2ca89a);
+      color: white; padding: 12px 25px;
+      border: none;
+      border-radius: 50px;
+      font-weight: bold;
+      font-size: 1em;
+      box-shadow: 0 4px 10px rgba(63, 184, 175, 0.4);
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(to right, #2ca89a, #3fb8af);
+    }
+
+    .wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.logo {
+  max-width: 180px;
+  margin-bottom: 10px;
+}
+
+.container {
+  margin: 0 10px; /* substitui o antigo margin: 30px 10px */
+}
+
+  </style>
+  <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+  <div id="menuContainer"></div>
+
+  <div class="wrapper">
+    <img src="fasiclinlogo.png" alt="Logo Fasiclin" class="logo" />
+
+    <div class="container">
+      <h2>Cadastro de Agendamento</h2>
+
+      <div class="campo">
+        <label for="profissional">Profissional</label>
+        <select id="profissional">
+          <option value="">Selecione um profissional</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="data">Data</label>
+        <input type="date" id="data" required />
+      </div>
+
+      <div class="campo">
+        <label for="hora">Hora</label>
+        <input type="time" id="hora" required />
+      </div>
+
+      <div class="campo">
+        <label for="paciente">Paciente</label>
+        <select id="paciente">
+          <option value="">Selecione um paciente</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="procedimento">Procedimento</label>
+        <select id="procedimento">
+          <option value="">Selecione um procedimento</option>
+        </select>
+
+        <div id="progressBar" style="display:none; text-align:center; margin-bottom: 20px;">
+          <span>Aguarde...</span>
+          <div style="width:100%; background:#eee; border-radius:10px; margin-top:8px;">
+            <div style="height:10px; width:100%; background:#3fb8af; border-radius:10px; animation: progressAnim 2s linear infinite;"></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="agendar()">Agendar</button>
+    </div>
+  </div>
+</body>
+
+  <script>
+
+     fetch("menu.html")
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById("menuContainer").innerHTML = html;
+        });
+
+    function carregarProfissionais() {
+      fetch("/api/get_profissionais_fisio.php")
+        .then(res => res.json())
+        .then(profissionais => {
+          const select = document.getElementById("profissional");
+          profissionais.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.IDPROFISSIO;
+            opt.textContent = p.NOMEPESSOA;
+            select.appendChild(opt);
+          });
+        })
+        .catch(() => alert("Erro ao carregar profissionais."));
+    }
+
+    function carregarPacientes() {
+      fetch("/api/get_pacientes.php") // Ajuste o endpoint conforme seu backend
+        .then(res => res.json())
+        .then(pacientes => {
+          const select = document.getElementById("paciente");
+          pacientes.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.IDPESSOAFIS;
+            opt.textContent = `${p.NOMEPESSOA} (${p.CPFPESSOA})`;
+            select.appendChild(opt);
+          });
+        })
+        .catch(() => alert("Erro ao carregar pacientes."));
+    }
+
+    function agendar() {
+  const idProf = document.getElementById("profissional").value;
+  const idPessoaFis = document.getElementById("paciente").value;
+  const idProced = document.getElementById("procedimento").value;
+  const data = document.getElementById("data").value;
+  const hora = document.getElementById("hora").value;
+
+  if (!idProf || !data || !hora || !idPessoaFis || !idProced) {
+    alert("Preencha todos os campos!");
+    return;
+  }
+
+  // Exibir progressBar
+  document.getElementById("progressBar").style.display = "block";
+
+  const payload = {
+    ID_PESSOAFIS: parseInt(idPessoaFis),
+    ID_PROFISSIO: parseInt(idProf),
+    ID_PROCED: parseInt(idProced),
+    DESCRCOMP: `Agendamento para ${data} às ${hora}`,
+    DATANOVA: `${data} ${hora}`,
+    SOLICMASTER: null,
+    MOTIALT: null
+  };
+
+  fetch("/api/post_agenda.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(res => res.json())
+    .then(resp => {
+      document.getElementById("progressBar").style.display = "none"; // Oculta após resposta
+      if (resp.sucesso) {
+        alert("Agendamento realizado com sucesso!\nLogin do profissional: " + resp.LOGUSUARIO);
+        window.location.href = "agenda.html";
+      } else {
+        alert("Erro: " + (resp.erro || resp.mensagem));
+      }
+    })
+    .catch(() => {
+      document.getElementById("progressBar").style.display = "none"; // Oculta em erro
+      alert("Erro ao enviar o agendamento.");
+    });
+}
+
+document.getElementById("paciente").addEventListener("change", carregarProcedimentos);
+
+function carregarProcedimentos() {
+  const pacienteSelect = document.getElementById("paciente");
+  const procedimentoSelect = document.getElementById("procedimento");
+
+  // Limpa as opções anteriores
+  procedimentoSelect.innerHTML = "";
+
+  const idPessoaFis = pacienteSelect.value;
+
+  // Se nenhum paciente foi selecionado
+  if (!idPessoaFis || idPessoaFis === "0") {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Selecione um paciente";
+    procedimentoSelect.appendChild(opt);
+    return;
+  }
+
+  fetch(`/api/get_procedimento_prescrito.php?idpessoafis=${idPessoaFis}`)
+    .then(res => res.json())
+    .then(data => {
+  const procedimentos = data.procedimentos;
+  if (!procedimentos || procedimentos.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Nenhum Procedimento prescrito para o paciente selecionado";
+    procedimentoSelect.appendChild(opt);
+    return;
+  }
+
+  procedimentos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.ID_PROCED;
+    opt.textContent = p.DESCRPROC;
+    procedimentoSelect.appendChild(opt);
+  });
+})
+
+    .catch(() => {
+      alert("Erro ao carregar procedimentos.");
+    });
+}
+
+
+
+
+    carregarProfissionais();
+    carregarPacientes();
+    carregarProcedimentos();
+  </script>
+
+</html>

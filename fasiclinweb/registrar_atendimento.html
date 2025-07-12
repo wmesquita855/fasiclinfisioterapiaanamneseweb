@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registrar Atendimento – Fasiclin</title>
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body {
+      margin: 0; padding: 0;
+      background: #3fb8af;
+      display: flex; justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin: 30px 10px;
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 700px;
+      width: 100%;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    h2 { color: #3fb8af; margin-bottom: 5px; }
+    p { margin-top: 0; margin-bottom: 10px; }
+    label { display: block; margin-top: 15px; font-weight: bold; }
+    input, textarea, select {
+      width: 100%; padding: 10px;
+      border-radius: 10px; border: 1px solid #ccc;
+      margin-top: 5px;
+    }
+    .btn {
+      background: linear-gradient(to right, #3fb8af, #2ca89a);
+      color: white; padding: 10px 20px; border: none;
+      border-radius: 50px; font-weight: bold; font-size: 0.95em;
+      box-shadow: 0 4px 10px rgba(63, 184, 175, 0.4);
+      cursor: pointer; transition: transform 0.2s ease, background 0.3s ease;
+      margin: 20px 10px 0 0;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(to right, #2ca89a, #3fb8af);
+    }
+    .btn-cancelar { background: red; }
+
+    .tabs {
+      display: flex;
+      margin-top: 20px;
+      border-bottom: 2px solid #ccc;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: bold;
+      color: #3fb8af;
+      border-bottom: 3px solid transparent;
+      transition: border-color 0.3s;
+    }
+    .tab.active {
+      border-bottom: 3px solid #3fb8af;
+    }
+    .tab-content {
+      display: none;
+      margin-top: 20px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .drop-area {
+  border: 2px dashed #3fb8af;
+  padding: 20px;
+  text-align: center;
+  border-radius: 10px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.drop-area.dragover {
+  background: #e0f7f5;
+  border-color: #2ca89a;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.logo {
+  max-width: 180px;
+  margin-bottom: 10px;
+}
+
+.container {
+  margin: 0 10px; /* substitui margin: 30px 10px para evitar espaçamento duplicado */
+}
+
+
+  </style>
+  <link rel="stylesheet" href="menu.css">
+</head>
+<body>
+  <div id="menuContainer"></div>
+
+  <div class="wrapper">
+    <img src="fasiclinlogo.png" alt="Logo Fasiclin" class="logo" />
+    <div class="container">
+
+    <h2 id="nomeCpf">Nome do Paciente (CPF)</h2>
+    <p id="descProcedimento">Procedimento: </p>
+    <p id="sexo">Sexo: </p>
+
+    <!-- Abas -->
+    <div class="tabs">
+      <div class="tab active" onclick="trocarAba('atendimento')">Atendimento</div>
+      <div class="tab" onclick="trocarAba('historico')">Histórico</div>
+    </div>
+
+    <!-- Conteúdo das Abas -->
+    <div id="atendimento" class="tab-content active">
+      <form id="formAtendimento">
+        <label for="data_atendimento">Data do Atendimento</label>
+        <input type="date" id="data_atendimento" name="data_atendimento" required>
+
+        <label for="descricao">Descrição do Atendimento</label>
+        <textarea id="descricao" name="descricao" rows="4" required></textarea>
+
+        <label for="evidencia">Registro de Evidências</label>
+          <div id="dropArea" class="drop-area">
+            <p>Arraste e solte a imagem aqui ou clique para selecionar</p>
+            <input type="file" id="evidencia" accept=".jpg,.jpeg,.png" style="display:none;">
+            <img id="preview" src="" alt="Pré-visualização" style="display:none; max-width:100%; margin-top:10px; border-radius:10px;" />
+          </div>
+
+      </form>
+    </div>
+
+    <div id="historico" class="tab-content">
+      <p>Conteúdo da aba Histórico aqui...</p>
+    </div>
+
+    <div style="text-align: center">
+      <button type="button" class="btn" onclick="salvarAtendimento()">Salvar Atendimento</button>
+      <button type="button" class="btn btn-cancelar" onclick="cancelar()">Cancelar</button>
+    </div>
+      </div> <!-- fecha container -->
+  </div> <!-- fecha wrapper -->
+</body>
+
+
+  <script>
+    fetch("menu.html")
+        .then(response => response.text())
+        .then(html => {
+          document.getElementById("menuContainer").innerHTML = html;
+        });
+
+    const agenda = JSON.parse(localStorage.getItem("agenda_selecionada"));
+
+    function formatarCPF(cpf) {
+      return cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+    }
+
+    document.getElementById("nomeCpf").textContent = `${agenda.nome_paciente} (${formatarCPF(agenda.cpf_paciente)})`;
+    document.getElementById("descProcedimento").textContent = `Procedimento: ${agenda.nome_procedimento}`;
+    document.getElementById("sexo").textContent = agenda.sexo_paciente === "M" ? "Masculino" : "Feminino";
+
+    function salvarAtendimento() {
+  const form = document.getElementById("formAtendimento");
+  if (!form.checkValidity()) {
+    alert("Preencha todos os campos obrigatórios.");
+    return;
+  }
+
+  const dados = {
+    ID_PESSOAFIS: agenda.ID_PESSOAFIS,        // precisa estar salvo no localStorage
+    ID_PROFISSIO: agenda.ID_PROFISSIO,      // idem
+    ID_PROCED: agenda.ID_PROCED,            // idem
+    DATAPROCED: form.data_atendimento.value,
+    DESCRPRONTU: form.descricao.value,
+    AUTOPACVISU: 1                          // ou 0 se for privado
+  };
+
+  fetch("/api/post_prontuario.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dados)
+  })
+  .then(res => res.json())
+  .then(resp => {
+    if (resp.sucesso) {
+      fetch("/api/post_atualizar_status_agenda.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ID_AGENDA: agenda.IDAGENDA,          
+          STATUSAGEN: 2
+        })
+      })
+      .then(res => res.json())
+      .then(respStatus => {
+        if (respStatus.sucesso) {
+          window.location.href = "agenda.html";
+        } else {
+          alert("Erro ao atualizar status: " + respStatus.erro);
+        }
+      })
+      .catch(err => {
+        console.error("Erro ao atualizar status da agenda:", err);
+      });
+
+      alert("Atendimento salvo com sucesso!");
+      window.location.href = "agenda.html";  // ✅ Redireciona para agenda
+    } else {
+      alert("Erro: " + resp.erro);
+    }
+  })
+  .catch(err => {
+    console.error("Erro na requisição:", err);
+    alert("Erro ao salvar atendimento.");
+  });
+
+  // Envio da imagem (se houver)
+  if (inputFile.files.length > 0) {
+    const formData = new FormData();
+    formData.append("arquivo", inputFile.files[0]);
+
+    fetch("arq/upload.php", {
+      method: "POST",
+      body: formData
+    })
+    .then(resp => resp.text())
+    .then(result => console.log("Arquivo enviado:", result))
+    .catch(err => console.error("Erro ao enviar imagem:", err));
+  }
+}
+
+
+    function cancelar() {
+      window.location.href = "agenda.html";
+    }
+
+    function trocarAba(abaSelecionada) {
+      document.querySelectorAll(".tab").forEach(tab => {
+        tab.classList.remove("active");
+      });
+      document.querySelectorAll(".tab-content").forEach(content => {
+        content.classList.remove("active");
+      });
+
+      document.querySelector(`.tab[onclick*='${abaSelecionada}']`).classList.add("active");
+      document.getElementById(abaSelecionada).classList.add("active");
+    }
+
+    // Preenche a data atual no campo data_atendimento
+document.addEventListener("DOMContentLoaded", () => {
+  const hoje = new Date().toISOString().split("T")[0]; // formato YYYY-MM-DD
+  document.getElementById("data_atendimento").value = hoje;
+});
+
+
+
+const dropArea = document.getElementById("dropArea");
+const inputFile = document.getElementById("evidencia");
+const preview = document.getElementById("preview");
+
+// Clique para selecionar arquivo
+dropArea.addEventListener("click", () => inputFile.click());
+
+// Drag & Drop
+dropArea.addEventListener("dragover", e => {
+  e.preventDefault();
+  dropArea.classList.add("dragover");
+});
+dropArea.addEventListener("dragleave", () => {
+  dropArea.classList.remove("dragover");
+});
+dropArea.addEventListener("drop", e => {
+  e.preventDefault();
+  dropArea.classList.remove("dragover");
+  inputFile.files = e.dataTransfer.files;
+  mostrarPreview(inputFile.files[0]);
+});
+
+
+// Quando o arquivo é selecionado
+inputFile.addEventListener("change", () => {
+  mostrarPreview(inputFile.files[0]);
+});
+
+function mostrarPreview(file) {
+  if (!file) return;
+
+  const tiposPermitidos = ["image/jpeg", "image/png"];
+  if (!tiposPermitidos.includes(file.type)) {
+    alert("Apenas arquivos JPG ou PNG são permitidos.");
+    inputFile.value = "";
+    preview.innerHTML = "";
+    preview.style.display = "none";
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    alert("O arquivo excede o limite de 20MB.");
+    inputFile.value = "";
+    preview.innerHTML = "";
+    preview.style.display = "none";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.src = e.target.result;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
+
+// Adicione este trecho no final da função salvarAtendimento()
+if (inputFile.files.length > 0) {
+  const formData = new FormData();
+  formData.append("arquivo", inputFile.files[0]);
+
+  fetch("arq/upload.php", {
+    method: "POST",
+    body: formData
+  })
+    .then(resp => resp.text())
+    .then(result => console.log("Arquivo enviado:", result))
+    .catch(err => console.error("Erro ao enviar imagem:", err));
+}
+
+
+  </script>
+
+</html>
