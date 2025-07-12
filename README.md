@@ -1,7 +1,7 @@
 # fasiclinfisioterapiaanamneseweb
 Registro de Anamnese de Fisioterapia da FASICLIN - versão web
 
-Versão do módulo Web de Registro de Anamnese de Fisioterapia apresentado no dia 12/07/2025 ao Coordenador Borba.
+Versão do módulo Web de Registro de Atendimento em Clinica de Fisioterapia apresentado no dia 12/07/2025 ao Coordenador Borba.
 
 - Servidor Apache
 - \fasiclinweb (Front-end)
