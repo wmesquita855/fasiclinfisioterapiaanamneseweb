@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>APPFISIO – Agenda</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+  <h1>Pacientes Agendados</h1>
+  <ul id="listaAgenda"></ul>
+  <button onclick="abrirFormulario()">Inserir Encaixe</button>
+
+  <form id="formAgenda" style="display:none;" onsubmit="inserirEncaixe(event)">
+    <input type="text" id="idPessoa" placeholder="ID do Paciente" required />
+    <input type="text" id="idProced" placeholder="ID do Procedimento" required />
+    <input type="date" id="dataAgenda" required />
+    <button type="submit">Salvar</button>
+  </form>
+
+  <script src="script.js"></script>
+</body>
+</html>
