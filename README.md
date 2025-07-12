@@ -1,5 +1,5 @@
 
-Registro de Atendimento de procedimentos em Clinica de Fisioterapia da FASICLIN - versão web
+Registro de Atendimento de procedimentos (em Clinica) de Fisioterapia da FASICLIN - versão web
 
 Versão do módulo Web de Registro de Atendimento de procedimentos em Clinica de Fisioterapia apresentado no dia 12/07/2025 ao Coordenador Borba.
 
